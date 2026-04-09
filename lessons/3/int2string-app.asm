@@ -1,45 +1,78 @@
 
-section .text
+section .data
+    newline db 10
 
+section .bss
+    buffer resb 10
+
+section .text
 global _start
 
-; 1. entry point
 _start:
-    ; 2. prepare parameters to function call
-    mov     eax, 123456789
-    mov     esi, buffer
-    ; 3. call function `int2str`
-    call    int2str
 
-    ; 4. prepare parameters to function call
-    mov     eax, 4      ; function number: 4-print
-    mov     ebx, 1      ; device number:   1-stdout
-    mov     ecx, esi    ; buffer to print
-    mov     edx, 1      ; length
-    ; 5. OS call, print to console
-    int     0x80
+    ; logic
+    mov eax, 1234
 
-    ; 6. prepare parameters to function call
-    mov     eax, 1
-    ; 7. OS call, exit
-    int     0x80
+    ; memory
+    mov esi, buffer
 
-; EAX - input parameter
-; ESI - buffer for output string
+    ; parse
+    call int2str
+
+    ; I/O
+    mov edx, eax
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, buffer
+    mov edx, esi
+    int 0x80
+
+    ; newline
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, newline
+    mov edx, 1
+    int 0x80
+
+    ; exit
+    mov eax, 1
+    xor ebx, ebx
+    int 0x80
+
+
 int2str:
-    ;
-    ; remainder = eax % 10
-    ; symbol = remainder + 48
-    ; TODO: loop
-    ; TODO: inc/dec ESI
+
+    ; loops
+    mov ecx, 0
+
+convert_loop:
+
+    ; math
     xor edx, edx
     mov ebx, 10
     div ebx
 
-    add dl, 48
+    ; parse
+    add dl, '0'
 
-    mov byte [esi], dl
+    ; memory
+    push dx
+    inc ecx
+
+    ; logic
+    cmp eax, 0
+    jne convert_loop
+
+write_loop:
+
+    ; memory
+    pop dx
+    mov [esi], dl
+    inc esi
+
+    ; loops
+    loop write_loop
+
+    ; logic
+    mov eax, ecx
     ret
-
-section .bss
-    buffer  resb 11
